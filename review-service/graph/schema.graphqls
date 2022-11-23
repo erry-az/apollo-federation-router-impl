@@ -1,0 +1,19 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+extend type User @key(fields: "id") {
+  id: ID! @external
+}
+
+type Review @key(fields: "id") {
+  id: ID!
+  title: String
+  description: String
+  reviewer: User
+}
+
+type Query {
+  ReviewList: [Review]
+}
+

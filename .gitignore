@@ -1,0 +1,4 @@
+.idea
+graphql-router/target
+review-service/vendor
+user-service/vendor

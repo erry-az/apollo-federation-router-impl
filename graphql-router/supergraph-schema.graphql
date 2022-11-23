@@ -1,0 +1,60 @@
+schema
+  @core(feature: "https://specs.apollo.dev/core/v0.2"),
+  @core(feature: "https://specs.apollo.dev/join/v0.1", for: EXECUTION)
+{
+  query: Query
+}
+
+directive @core(as: String, feature: String!, for: core__Purpose) repeatable on SCHEMA
+
+directive @join__field(graph: join__Graph, provides: join__FieldSet, requires: join__FieldSet) on FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__owner(graph: join__Graph!) on INTERFACE | OBJECT
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet) repeatable on INTERFACE | OBJECT
+
+type Query {
+  ReviewList: [Review] @join__field(graph: REVIEW)
+  UserGetByID(id: ID!): User @join__field(graph: USER)
+}
+
+type Review
+  @join__owner(graph: REVIEW)
+  @join__type(graph: REVIEW, key: "id")
+{
+  description: String @join__field(graph: REVIEW)
+  id: ID! @join__field(graph: REVIEW)
+  reviewer: User @join__field(graph: REVIEW)
+  title: String @join__field(graph: REVIEW)
+}
+
+type User
+  @join__owner(graph: USER)
+  @join__type(graph: USER, key: "id")
+  @join__type(graph: REVIEW, key: "id")
+{
+  email: String @join__field(graph: USER)
+  id: ID! @join__field(graph: USER)
+  name: String @join__field(graph: USER)
+}
+
+enum core__Purpose {
+  """
+  `EXECUTION` features provide metadata necessary to for operation execution.
+  """
+  EXECUTION
+
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+}
+
+scalar join__FieldSet
+
+enum join__Graph {
+  REVIEW @join__graph(name: "review" url: "http://localhost:8088/query")
+  USER @join__graph(name: "user" url: "http://localhost:8080/query")
+}

@@ -1,0 +1,9 @@
+subgraphs:
+  user:
+    routing_url: "http://localhost:8080/query"
+    schema:
+      subgraph_url: "http://localhost:8080/query"
+  review:
+    routing_url: "http://localhost:8088/query"
+    schema:
+      subgraph_url: "http://localhost:8088/query"

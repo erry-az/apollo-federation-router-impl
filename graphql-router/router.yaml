@@ -1,0 +1,30 @@
+telemetry:
+  metrics:
+    common:
+      # (Optional, default to "apollo-router") Set the service name to easily find metrics related to the apollo-router in your metrics dashboards
+      service_name: "graphql-router"
+      # (Optional)
+      service_namespace: "graphql"
+    prometheus:
+      # By setting this endpoint you enable the prometheus exporter
+      # All our endpoints exposed by plugins are namespaced by the name of the plugin
+      enabled: true
+      listen: 127.0.0.1:9090
+      path: /metrics
+plugins:
+  graphql_router.jwt:
+    algorithm: HS256
+    key: "dGVzdDEyMw=="
+    time_tolerance: 60
+    max_token_life: 864000
+sandbox:
+  enabled: true
+# make sure you enable introspection
+supergraph:
+  introspection: true
+# make sure homepage is disabled
+homepage:
+  enabled: false
+health-check:
+  listen: 127.0.0.1:8090
+  enabled: true
