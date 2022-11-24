@@ -13,25 +13,38 @@ type Review struct {
 	Reviewer    User
 }
 
-var Reviewers = make(map[int64]Review)
+var (
+	Reviews = make(map[int64]Review)
+)
 
 func InitReviewers() {
 	for i := 1; i <= 15; i++ {
-		Reviewers[int64(i)] = Review{
+		userID := randNumInt64()
+		review := Review{
 			ID:          int64(i),
 			Title:       "title " + strconv.Itoa(i),
 			Description: "desc " + strconv.Itoa(i),
 			Reviewer: User{
-				ID: randNumInt64(),
+				ID: userID,
 			},
 		}
+		addUserReview(userID, 1, review)
+		Reviews[int64(i)] = review
+	}
+
+	for i, review := range Reviews {
+		if reviewer, ok := Reviewers[review.Reviewer.ID]; ok {
+			review.Reviewer = reviewer
+			Reviews[i] = review
+		}
+
 	}
 }
 
 func randNumInt64() int64 {
 	var (
 		min = 1
-		max = 20
+		max = 9
 	)
 
 	rand.Seed(time.Now().UnixNano())

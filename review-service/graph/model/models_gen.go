@@ -11,8 +11,14 @@ type Review struct {
 
 func (Review) IsEntity() {}
 
+type ReviewListResponse struct {
+	Reviews []*Review `json:"reviews"`
+}
+
 type User struct {
-	ID int64 `json:"id"`
+	ID          int64     `json:"id"`
+	Reviews     []*Review `json:"reviews"`
+	TotalReview *int      `json:"totalReview"`
 }
 
 func (User) IsEntity() {}

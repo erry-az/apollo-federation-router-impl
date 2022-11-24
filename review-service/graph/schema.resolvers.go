@@ -12,21 +12,14 @@ import (
 )
 
 // ReviewList is the resolver for the ReviewList field.
-func (r *queryResolver) ReviewList(ctx context.Context) ([]*model.Review, error) {
-	reviewResponse := make([]*model.Review, 0, len(data.Reviewers))
+func (r *queryResolver) ReviewList(ctx context.Context) (*model.ReviewListResponse, error) {
+	reviewResponse := make([]*model.Review, 0, len(data.Reviews))
 
-	for _, review := range data.Reviewers {
-		reviewResponse = append(reviewResponse, &model.Review{
-			ID:          review.ID,
-			Title:       &review.Title,
-			Description: &review.Description,
-			Reviewer: &model.User{
-				ID: review.Reviewer.ID,
-			},
-		})
+	for _, review := range data.Reviews {
+		reviewResponse = append(reviewResponse, newReviewModel(review))
 	}
 
-	return reviewResponse, nil
+	return &model.ReviewListResponse{Reviews: reviewResponse}, nil
 }
 
 // Query returns generated.QueryResolver implementation.

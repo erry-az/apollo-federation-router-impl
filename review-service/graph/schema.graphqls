@@ -4,6 +4,8 @@
 
 extend type User @key(fields: "id") {
   id: ID! @external
+  reviews: [Review]
+  totalReview: Int
 }
 
 type Review @key(fields: "id") {
@@ -11,6 +13,10 @@ type Review @key(fields: "id") {
   title: String
   description: String
   reviewer: User
+}
+
+type ReviewListResponse {
+  reviews: [Review]
 }
 
 type Query {

@@ -47,6 +47,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Entity struct {
 		FindReviewByID func(childComplexity int, id int64) int
+		FindUserByID   func(childComplexity int, id int64) int
 	}
 
 	Query struct {
@@ -62,8 +63,14 @@ type ComplexityRoot struct {
 		Title       func(childComplexity int) int
 	}
 
+	ReviewListResponse struct {
+		Reviews func(childComplexity int) int
+	}
+
 	User struct {
-		ID func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Reviews     func(childComplexity int) int
+		TotalReview func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -73,9 +80,10 @@ type ComplexityRoot struct {
 
 type EntityResolver interface {
 	FindReviewByID(ctx context.Context, id int64) (*model.Review, error)
+	FindUserByID(ctx context.Context, id int64) (*model.User, error)
 }
 type QueryResolver interface {
-	ReviewList(ctx context.Context) ([]*model.Review, error)
+	ReviewList(ctx context.Context) (*model.ReviewListResponse, error)
 }
 
 type executableSchema struct {
@@ -104,6 +112,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindReviewByID(childComplexity, args["id"].(int64)), true
+
+	case "Entity.findUserByID":
+		if e.complexity.Entity.FindUserByID == nil {
+			break
+		}
+
+		args, err := ec.field_Entity_findUserByID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Entity.FindUserByID(childComplexity, args["id"].(int64)), true
 
 	case "Query.ReviewList":
 		if e.complexity.Query.ReviewList == nil {
@@ -159,12 +179,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Review.Title(childComplexity), true
 
+	case "ReviewListResponse.reviews":
+		if e.complexity.ReviewListResponse.Reviews == nil {
+			break
+		}
+
+		return e.complexity.ReviewListResponse.Reviews(childComplexity), true
+
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+
+	case "User.reviews":
+		if e.complexity.User.Reviews == nil {
+			break
+		}
+
+		return e.complexity.User.Reviews(childComplexity), true
+
+	case "User.totalReview":
+		if e.complexity.User.TotalReview == nil {
+			break
+		}
+
+		return e.complexity.User.TotalReview(childComplexity), true
 
 	case "_Service.sdl":
 		if e.complexity._Service.SDL == nil {
@@ -231,6 +272,8 @@ var sources = []*ast.Source{
 
 extend type User @key(fields: "id") {
   id: ID! @external
+  reviews: [Review]
+  totalReview: Int
 }
 
 type Review @key(fields: "id") {
@@ -240,8 +283,12 @@ type Review @key(fields: "id") {
   reviewer: User
 }
 
+type ReviewListResponse {
+  reviews: [Review]
+}
+
 type Query {
-  ReviewList: [Review]
+  ReviewList: ReviewListResponse
 }
 
 `, BuiltIn: false},
@@ -268,6 +315,7 @@ union _Entity = Review | User
 # fake type to build resolver interfaces for users to implement
 type Entity {
 		findReviewByID(id: ID!,): Review!
+	findUserByID(id: ID!,): User!
 
 }
 
@@ -288,6 +336,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // region    ***************************** args.gotpl *****************************
 
 func (ec *executionContext) field_Entity_findReviewByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int64
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Entity_findUserByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int64
@@ -435,6 +498,69 @@ func (ec *executionContext) fieldContext_Entity_findReviewByID(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Entity_findUserByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Entity_findUserByID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Entity().FindUserByID(rctx, fc.Args["id"].(int64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Entity_findUserByID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Entity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "reviews":
+				return ec.fieldContext_User_reviews(ctx, field)
+			case "totalReview":
+				return ec.fieldContext_User_totalReview(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Entity_findUserByID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_ReviewList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_ReviewList(ctx, field)
 	if err != nil {
@@ -458,9 +584,9 @@ func (ec *executionContext) _Query_ReviewList(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Review)
+	res := resTmp.(*model.ReviewListResponse)
 	fc.Result = res
-	return ec.marshalOReview2ᚕᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+	return ec.marshalOReviewListResponse2ᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐReviewListResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_ReviewList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -471,16 +597,10 @@ func (ec *executionContext) fieldContext_Query_ReviewList(ctx context.Context, f
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Review_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Review_title(ctx, field)
-			case "description":
-				return ec.fieldContext_Review_description(ctx, field)
-			case "reviewer":
-				return ec.fieldContext_Review_reviewer(ctx, field)
+			case "reviews":
+				return ec.fieldContext_ReviewListResponse_reviews(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Review", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ReviewListResponse", field.Name)
 		},
 	}
 	return fc, nil
@@ -882,8 +1002,63 @@ func (ec *executionContext) fieldContext_Review_reviewer(ctx context.Context, fi
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
+			case "reviews":
+				return ec.fieldContext_User_reviews(ctx, field)
+			case "totalReview":
+				return ec.fieldContext_User_totalReview(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReviewListResponse_reviews(ctx context.Context, field graphql.CollectedField, obj *model.ReviewListResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ReviewListResponse_reviews(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reviews, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Review)
+	fc.Result = res
+	return ec.marshalOReview2ᚕᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ReviewListResponse_reviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReviewListResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Review_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Review_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Review_description(ctx, field)
+			case "reviewer":
+				return ec.fieldContext_Review_reviewer(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Review", field.Name)
 		},
 	}
 	return fc, nil
@@ -928,6 +1103,98 @@ func (ec *executionContext) fieldContext_User_id(ctx context.Context, field grap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_reviews(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_reviews(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reviews, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Review)
+	fc.Result = res
+	return ec.marshalOReview2ᚕᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_reviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Review_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Review_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Review_description(ctx, field)
+			case "reviewer":
+				return ec.fieldContext_Review_reviewer(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Review", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_totalReview(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_totalReview(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalReview, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_totalReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2820,6 +3087,29 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "findUserByID":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Entity_findUserByID(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2979,6 +3269,31 @@ func (ec *executionContext) _Review(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var reviewListResponseImplementors = []string{"ReviewListResponse"}
+
+func (ec *executionContext) _ReviewListResponse(ctx context.Context, sel ast.SelectionSet, obj *model.ReviewListResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reviewListResponseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReviewListResponse")
+		case "reviews":
+
+			out.Values[i] = ec._ReviewListResponse_reviews(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var userImplementors = []string{"User", "_Entity"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
@@ -2996,6 +3311,14 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "reviews":
+
+			out.Values[i] = ec._User_reviews(ctx, field, obj)
+
+		case "totalReview":
+
+			out.Values[i] = ec._User_totalReview(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3409,6 +3732,20 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNUser2githubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalN_Any2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
 	res, err := graphql.UnmarshalMap(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3798,6 +4135,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
 func (ec *executionContext) marshalOReview2ᚕᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v []*model.Review) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -3844,6 +4197,13 @@ func (ec *executionContext) marshalOReview2ᚖgithubᚗcomᚋerryᚑazᚋgoᚑgq
 		return graphql.Null
 	}
 	return ec._Review(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOReviewListResponse2ᚖgithubᚗcomᚋerryᚑazᚋgoᚑgqlᚑfederationᚋreviewᚑserviceᚋgraphᚋmodelᚐReviewListResponse(ctx context.Context, sel ast.SelectionSet, v *model.ReviewListResponse) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ReviewListResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

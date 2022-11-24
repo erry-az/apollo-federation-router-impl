@@ -16,7 +16,7 @@ directive @join__owner(graph: join__Graph!) on INTERFACE | OBJECT
 directive @join__type(graph: join__Graph!, key: join__FieldSet) repeatable on INTERFACE | OBJECT
 
 type Query {
-  ReviewList: [Review] @join__field(graph: REVIEW)
+  ReviewList: ReviewListResponse @join__field(graph: REVIEW)
   UserGetByID(id: ID!): User @join__field(graph: USER)
 }
 
@@ -30,6 +30,10 @@ type Review
   title: String @join__field(graph: REVIEW)
 }
 
+type ReviewListResponse {
+  reviews: [Review]
+}
+
 type User
   @join__owner(graph: USER)
   @join__type(graph: USER, key: "id")
@@ -38,6 +42,8 @@ type User
   email: String @join__field(graph: USER)
   id: ID! @join__field(graph: USER)
   name: String @join__field(graph: USER)
+  reviews: [Review] @join__field(graph: REVIEW)
+  totalReview: Int @join__field(graph: REVIEW)
 }
 
 enum core__Purpose {

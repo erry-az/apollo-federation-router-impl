@@ -11,12 +11,13 @@ telemetry:
       enabled: true
       listen: 127.0.0.1:9090
       path: /metrics
-plugins:
-  graphql_router.jwt:
-    algorithm: HS256
-    key: "dGVzdDEyMw=="
-    time_tolerance: 60
-    max_token_life: 864000
+# remove this comment if you want to use jwt plugin
+#plugins:
+#  graphql_router.jwt:
+#    algorithm: HS256
+#    key: "dGVzdDEyMw=="
+#    time_tolerance: 60
+#    max_token_life: 864000
 sandbox:
   enabled: true
 # make sure you enable introspection
