@@ -224,7 +224,10 @@ type User @key(fields: "id") {
 type Query {
   UserGetByID(id: ID!): User
 }
-`, BuiltIn: false},
+
+extend schema
+@link(url: "https://specs.apollo.dev/federation/v2.0",
+  import: ["@key", "@shareable"])`, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	scalar _Any
 	scalar _FieldSet

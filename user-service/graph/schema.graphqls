@@ -11,3 +11,7 @@ type User @key(fields: "id") {
 type Query {
   UserGetByID(id: ID!): User
 }
+
+extend schema
+@link(url: "https://specs.apollo.dev/federation/v2.0",
+  import: ["@key", "@shareable"])

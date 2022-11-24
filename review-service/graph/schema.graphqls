@@ -2,8 +2,8 @@
 #
 # https://gqlgen.com/getting-started/
 
-extend type User @key(fields: "id") {
-  id: ID! @external
+type User @key(fields: "id") {
+  id: ID!
   reviews: [Review]
   totalReview: Int
 }
@@ -20,6 +20,9 @@ type ReviewListResponse {
 }
 
 type Query {
-  ReviewList: [Review]
+  ReviewList: ReviewListResponse
 }
 
+extend schema
+@link(url: "https://specs.apollo.dev/federation/v2.0",
+  import: ["@key", "@shareable"])
