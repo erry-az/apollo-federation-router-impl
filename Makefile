@@ -1,6 +1,6 @@
 install:
 	curl -sSL https://rover.apollo.dev/nix/v0.9.1 | sh
-	
+
 
 user/gen:
 	cd user-service && go run github.com/99designs/gqlgen
